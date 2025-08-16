@@ -1,37 +1,44 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Mic, MicOff, Save, Loader2, Wifi, WifiOff } from "lucide-react";
-import { toast } from "sonner";
-import { VoiceNote } from "@/types/VoiceNote";
-import "@/types/VoiceNote"; // Import speech recognition types
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Mic, MicOff, Wifi, WifiOff, Loader2, Play, Pause } from 'lucide-react';
+import { toast } from 'sonner';
+import { VoiceNote } from '@/types/VoiceNote';
+import { supabase } from '@/integrations/supabase/client';
 
 const VoiceRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState("");
-  const [currentTranscript, setCurrentTranscript] = useState("");
+  const [transcription, setTranscription] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [summary, setSummary] = useState("");
+  const [processingStage, setProcessingStage] = useState('');
+  const [enhancement, setEnhancement] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [networkError, setNetworkError] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Monitor network status
+    // Network status listeners
     const handleOnline = () => {
       setIsOnline(true);
       setNetworkError(false);
+      toast.success("Connection restored");
     };
+
     const handleOffline = () => {
       setIsOnline(false);
-      if (isRecording) {
-        stopRecording();
-        toast.error("Lost internet connection. Recording stopped.");
-      }
+      setNetworkError(true);
+      toast.error("Connection lost");
     };
 
     window.addEventListener('online', handleOnline);
@@ -40,131 +47,134 @@ const VoiceRecorder = () => {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
     };
-  }, [isRecording]);
+  }, [audioUrl]);
 
-  useEffect(() => {
-    // Check if speech recognition is supported
-    
-    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-      console.error('Speech recognition not supported');
-      toast.error("Speech recognition requires Chrome, Edge, or Safari. On mobile, please use Chrome or Safari browser.");
-      return;
-    }
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      });
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-      setNetworkError(false);
-      toast.success("Recording started - speak clearly");
-    };
-
-    recognition.onresult = (event) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-      }
+      };
 
-      if (finalTranscript) {
-        setTranscription(prev => prev + finalTranscript);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { 
+          type: mediaRecorder.mimeType 
+        });
+        setAudioBlob(audioBlob);
+        
+        // Create audio URL for playback
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Clear duration timer
+        if (durationIntervalRef.current) {
+          clearInterval(durationIntervalRef.current);
+          durationIntervalRef.current = null;
+        }
+        
+        // Process the audio
+        await processAudio(audioBlob);
+      };
+
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      recordingStartTimeRef.current = Date.now();
+      setRecordingDuration(0);
+      
+      // Clear previous results
+      setTranscription('');
+      setEnhancement(null);
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
       }
       
-      setCurrentTranscript(interimTranscript);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-      setNetworkError(true);
+      // Start duration timer
+      durationIntervalRef.current = setInterval(() => {
+        setRecordingDuration(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000));
+      }, 1000);
       
-      if (event.error === 'network') {
-        toast.error("Network error: Please check your internet connection and try again.");
-      } else if (event.error === 'no-speech') {
-        toast.error("No speech detected. Please speak louder or closer to the microphone.");
-      } else if (event.error === 'audio-capture') {
-        toast.error("Microphone not accessible. Please check permissions.");
-      } else if (event.error === 'not-allowed') {
-        toast.error("Microphone access denied. Please allow microphone permission.");
-      } else {
-        toast.error(`Recording error: ${event.error}. Please try again.`);
-      }
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      setCurrentTranscript("");
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
-
-
-  const startRecording = () => {
-    if (!isOnline) {
-      toast.error("No internet connection. Speech recognition requires an active internet connection.");
-      return;
-    }
-
-    if (recognitionRef.current && !isRecording) {
-      setTranscription("");
-      setCurrentTranscript("");
-      setSummary("");
-      setNetworkError(false);
+      toast.success("Recording started - speak clearly");
       
-      // Request microphone permission explicitly on mobile
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(() => {
-            recognitionRef.current?.start();
-          })
-          .catch((error) => {
-            console.error('Microphone permission denied:', error);
-            toast.error("Microphone access is required. Please allow microphone permission and try again.");
-          });
-      } else {
-        recognitionRef.current.start();
-      }
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      toast.error("Failed to access microphone. Please allow microphone permissions.");
     }
   };
 
   const stopRecording = () => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
+  const processAudio = async (audioBlob: Blob) => {
+    if (!isOnline) {
+      toast.error("No internet connection - cannot process audio");
+      return;
+    }
 
-  const generateSummary = (text: string): string => {
-    if (text.length < 50) return "";
+    setIsProcessing(true);
     
-    // Simple AI-like summary generation
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    if (sentences.length <= 2) return "";
-    
-    // Take every other sentence or key sentences (simple heuristic)
-    const keySentences = sentences.filter((_, index) => index % 2 === 0 || sentences[index]?.includes('important') || sentences[index]?.includes('action'));
-    
-    return keySentences.slice(0, 3).map(s => `• ${s.trim()}`).join('\n');
+    try {
+      // Step 1: Convert audio to base64 and transcribe
+      setProcessingStage("Converting audio...");
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const base64Audio = btoa(String.fromCharCode(...uint8Array));
+      
+      setProcessingStage("Transcribing with AI...");
+      const transcribeResponse = await supabase.functions.invoke('transcribe-audio', {
+        body: { audio: base64Audio }
+      });
+
+      if (transcribeResponse.error) {
+        throw new Error(transcribeResponse.error.message);
+      }
+
+      const transcriptionText = transcribeResponse.data.text;
+      setTranscription(transcriptionText);
+      
+      // Step 2: Enhance with AI
+      setProcessingStage("Generating insights...");
+      const enhanceResponse = await supabase.functions.invoke('enhance-note', {
+        body: { transcription: transcriptionText }
+      });
+
+      if (enhanceResponse.error) {
+        throw new Error(enhanceResponse.error.message);
+      }
+
+      setEnhancement(enhanceResponse.data);
+      toast.success("Voice note processed successfully!");
+      
+    } catch (error) {
+      console.error('Audio processing error:', error);
+      toast.error(`Processing failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+      setProcessingStage("");
+    }
   };
 
   const saveNote = () => {
@@ -173,158 +183,241 @@ const VoiceRecorder = () => {
       return;
     }
 
-    setIsProcessing(true);
-    
-    // Generate summary
-    const noteSummary = generateSummary(transcription);
-    
     const note: VoiceNote = {
-      id: Date.now().toString(),
-      title: `Note - ${new Date().toLocaleString()}`,
+      id: crypto.randomUUID(),
+      title: enhancement?.title || `Voice Note ${new Date().toLocaleDateString()}`,
       transcription: transcription.trim(),
-      summary: noteSummary || undefined,
-      tags: [],
+      summary: enhancement?.summary || '',
+      tags: enhancement?.keyTopics || [],
       timestamp: new Date(),
     };
 
-    // Save to localStorage
+    // Get existing notes from localStorage
     const existingNotes = JSON.parse(localStorage.getItem('rhei-voice-notes') || '[]');
+    
+    // Add new note
     const updatedNotes = [note, ...existingNotes];
+    
+    // Save to localStorage
     localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
 
-    setIsProcessing(false);
-    
-    toast.success("Note saved successfully!");
-    
-    // Reset for next recording
-    setTimeout(() => {
-      setTranscription("");
-      setSummary("");
-    }, 2000);
+    // Reset state
+    setTranscription('');
+    setEnhancement(null);
+    setAudioBlob(null);
+    setRecordingDuration(0);
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+
+    toast.success("Voice note saved successfully!");
   };
 
-  const displayText = transcription + currentTranscript;
+  const togglePlayback = () => {
+    if (!audioUrl) return;
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="space-y-6">
-        {/* Recording Button */}
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            className={`record-button ${isRecording ? 'recording' : 'inactive'} w-32 h-32 rounded-full text-white font-semibold text-lg shadow-lg`}
-            style={{
-              backgroundColor: isRecording ? 'hsl(var(--recording-active))' : 'hsl(var(--rhei-primary))',
-            }}
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={isProcessing}
-          >
-            {isRecording ? (
-              <>
-                <MicOff className="w-8 h-8 mb-2" />
-                <span>Stop</span>
-              </>
-            ) : (
-              <>
-                <Mic className="w-8 h-8 mb-2" />
-                <span>Record</span>
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Status */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center space-x-2">
-            {isOnline ? (
-              <Wifi className="w-4 h-4 text-rhei-success" />
-            ) : (
-              <WifiOff className="w-4 h-4 text-destructive" />
-            )}
-            <span className="text-sm text-muted-foreground">
-              {isOnline ? "Connected" : "No Internet"}
-            </span>
-          </div>
-          
-          <p className="text-lg font-medium">
-            {isRecording ? (
-              <span className="text-recording-active">🔴 Recording...</span>
-            ) : transcription ? (
-              <span className="text-rhei-success">✅ Recording complete</span>
-            ) : networkError ? (
-              <span className="text-destructive">❌ Network error - check connection</span>
-            ) : !isOnline ? (
-              <span className="text-destructive">📶 Internet required for recording</span>
-            ) : (
-              <span className="text-muted-foreground">Click to start recording</span>
-            )}
-          </p>
-        </div>
-
-        {/* Live Transcription */}
-        {displayText && (
-          <Card className="note-card">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg mb-3">Live Transcription</h3>
-                  <Textarea
-                    value={displayText}
-                    onChange={(e) => setTranscription(e.target.value)}
-                    placeholder="Your transcription will appear here..."
-                    className="min-h-32 fade-in"
-                    readOnly={isRecording}
-                  />
-                </div>
-
-
-                {summary && (
-                  <div>
-                    <h4 className="font-medium mb-2">AI Summary</h4>
-                    <div className="bg-muted p-3 rounded-md">
-                      <pre className="text-sm whitespace-pre-wrap">{summary}</pre>
-                    </div>
-                  </div>
+      <Card className="mb-8">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            AI Voice Notes
+          </CardTitle>
+          <CardDescription>
+            Record your voice and get AI-powered transcription and insights
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                {isOnline ? (
+                  <Wifi className="h-4 w-4 text-green-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-500" />
                 )}
-
-                {transcription && !isRecording && (
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={saveNote} 
-                      disabled={isProcessing}
-                      className="flex items-center space-x-2"
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4" />
-                      )}
-                      <span>{isProcessing ? "Saving..." : "Save Note"}</span>
-                    </Button>
-                  </div>
-                )}
+                <span className="text-sm text-muted-foreground">
+                  {isOnline ? 'Connected' : 'Offline'}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              
+              <Badge variant={isRecording ? "destructive" : "secondary"}>
+                {isRecording ? `Recording ${formatDuration(recordingDuration)}` : 'Ready'}
+              </Badge>
+            </div>
 
-        {/* Instructions */}
-        <Card className="bg-muted/50">
+            <Button
+              onClick={isRecording ? stopRecording : startRecording}
+              size="lg"
+              variant={isRecording ? "destructive" : "default"}
+              className="h-24 w-24 rounded-full"
+              disabled={networkError || isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="h-8 w-8 animate-spin" />
+              ) : isRecording ? (
+                <MicOff className="h-8 w-8" />
+              ) : (
+                <Mic className="h-8 w-8" />
+              )}
+            </Button>
+
+            <p className="text-center text-muted-foreground max-w-md">
+              {isProcessing 
+                ? processingStage || "Processing..." 
+                : isRecording 
+                  ? "Recording... Click to stop and process with AI" 
+                  : "Click the microphone to start recording your voice note"
+              }
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {audioUrl && !isRecording && (
+        <Card className="mb-6">
           <CardContent className="p-4">
-            <h4 className="font-medium mb-2">How to use:</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• <strong>Internet required:</strong> Voice recognition needs active connection</li>
-              <li>• Click the record button to start voice recording</li>
-              <li>• Allow microphone access when prompted</li>
-              <li>• Speak clearly - transcription appears in real-time</li>
-              <li>• On mobile: Use Chrome or Safari browser for best results</li>
-              <li>• If network errors occur, check your connection and try again</li>
-              <li>• Recording continues until you click stop</li>
-              <li>• Edit transcription if needed, then save your note</li>
-            </ul>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={togglePlayback}
+                  size="sm"
+                  variant="outline"
+                  disabled={isProcessing}
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Recording ({formatDuration(recordingDuration)})
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {transcription && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Transcription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Textarea
+                value={transcription}
+                onChange={(e) => setTranscription(e.target.value)}
+                placeholder="Your transcription will appear here..."
+                className="min-h-[200px] resize-none"
+                disabled={isProcessing}
+              />
+
+              {enhancement && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-md font-medium mb-3">AI Analysis</h4>
+                    <div className="p-4 bg-muted rounded-lg space-y-3">
+                      <div>
+                        <span className="text-sm font-medium">Suggested Title:</span>
+                        <p className="text-sm mt-1 font-semibold">{enhancement.title}</p>
+                      </div>
+                      
+                      <div>
+                        <span className="text-sm font-medium">Summary:</span>
+                        <p className="text-sm mt-1">{enhancement.summary}</p>
+                      </div>
+                      
+                      {enhancement.actionItems?.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium">Action Items:</span>
+                          <ul className="list-disc list-inside text-sm mt-1 space-y-1">
+                            {enhancement.actionItems.map((item: string, index: number) => (
+                              <li key={index}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {enhancement.keyTopics?.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium">Key Topics:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {enhancement.keyTopics.map((topic: string, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {topic}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {enhancement.sentiment && (
+                        <div>
+                          <span className="text-sm font-medium">Sentiment:</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`ml-2 text-xs ${
+                              enhancement.sentiment === 'positive' ? 'border-green-500 text-green-700' :
+                              enhancement.sentiment === 'negative' ? 'border-red-500 text-red-700' :
+                              'border-gray-500 text-gray-700'
+                            }`}
+                          >
+                            {enhancement.sentiment}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button 
+                onClick={saveNote}
+                className="w-full"
+                disabled={isProcessing}
+              >
+                Save Note
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="bg-muted/50">
+        <CardContent className="p-4">
+          <h4 className="font-medium mb-2">How to use:</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
+            <li>• Click the microphone to start recording</li>
+            <li>• Allow microphone access when prompted</li>
+            <li>• Speak clearly into your device's microphone</li>
+            <li>• Click stop when finished - AI will process your audio</li>
+            <li>• Review and edit the transcription if needed</li>
+            <li>• Get AI-powered summaries, action items, and insights</li>
+            <li>• Save your enhanced voice note</li>
+            <li>• Works on all modern browsers and devices</li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 };

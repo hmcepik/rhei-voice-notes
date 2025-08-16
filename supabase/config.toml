@@ -1,1 +1,78 @@
 project_id = "vcrdwrrrqigoclbyqjbx"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54322
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_email_autoconfirm = false
+enable_phone_confirmations = false
+enable_phone_autoconfirm = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = false
+template = "Your code is {{ .Code }} ."
+
+[rest]
+enabled = true
+port = 54323
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[realtime]
+enabled = true
+port = 54324
+ip_version = "ipv4"
+
+[studio]
+enabled = true
+port = 54325
+api_url = "http://localhost:54321"
+
+[inbucket]
+enabled = true
+port = 54326
+smtp_port = 54327
+pop3_port = 54328
+
+[storage]
+enabled = true
+port = 54327
+file_size_limit = "50MiB"
+image_transformation = { enabled = true }
+
+[analytics]
+enabled = false
+port = 54328
+vector_port = 54329
+
+[functions]
+enabled = true
+
+[functions.transcribe-audio]
+verify_jwt = false
+
+[functions.enhance-note]
+verify_jwt = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
