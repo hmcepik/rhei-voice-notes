@@ -36,10 +36,10 @@ All colors MUST be HSL.
     --input: 262 15% 90%;
     --ring: 262 80% 45%;
 
-    /* RHEI Brand Colors */
-    --rhei-primary: 231 76% 60%;
-    --rhei-primary-light: 240 83% 70%;
-    --rhei-primary-dark: 231 90% 45%;
+    /* RHEI Brand Colors - Blue Scheme */
+    --rhei-primary: 214 84% 56%;
+    --rhei-primary-light: 214 76% 70%;
+    --rhei-primary-dark: 214 90% 42%;
     --rhei-success: 142 76% 36%;
     --rhei-warning: 38 92% 50%;
     --recording-active: 0 84% 60%;
