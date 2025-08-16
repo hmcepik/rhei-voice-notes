@@ -45,12 +45,6 @@ const VoiceRecorder = () => {
 
   useEffect(() => {
     // Check if speech recognition is supported
-    console.log('Speech Recognition support check:', {
-      hasSpeechRecognition: 'SpeechRecognition' in window,
-      hasWebkitSpeechRecognition: 'webkitSpeechRecognition' in window,
-      userAgent: navigator.userAgent,
-      isSecureContext: window.isSecureContext
-    });
     
     if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
       console.error('Speech recognition not supported');
@@ -66,20 +60,17 @@ const VoiceRecorder = () => {
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
-      console.log('Speech recognition started');
       setIsRecording(true);
       setNetworkError(false);
       toast.success("Recording started - speak clearly");
     };
 
     recognition.onresult = (event) => {
-      console.log('Speech recognition result event:', event);
       let finalTranscript = '';
       let interimTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        console.log(`Result ${i}: "${transcript}", isFinal: ${event.results[i].isFinal}`);
         
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -88,15 +79,8 @@ const VoiceRecorder = () => {
         }
       }
 
-      console.log('Final transcript:', finalTranscript);
-      console.log('Interim transcript:', interimTranscript);
-
       if (finalTranscript) {
-        setTranscription(prev => {
-          const newTranscription = prev + finalTranscript;
-          console.log('Setting transcription to:', newTranscription);
-          return newTranscription;
-        });
+        setTranscription(prev => prev + finalTranscript);
       }
       
       setCurrentTranscript(interimTranscript);
