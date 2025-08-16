@@ -66,17 +66,21 @@ const VoiceRecorder = () => {
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
+      console.log('Speech recognition started');
       setIsRecording(true);
       setNetworkError(false);
       toast.success("Recording started - speak clearly");
     };
 
     recognition.onresult = (event) => {
+      console.log('Speech recognition result event:', event);
       let finalTranscript = '';
       let interimTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
+        console.log(`Result ${i}: "${transcript}", isFinal: ${event.results[i].isFinal}`);
+        
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
         } else {
@@ -84,8 +88,15 @@ const VoiceRecorder = () => {
         }
       }
 
+      console.log('Final transcript:', finalTranscript);
+      console.log('Interim transcript:', interimTranscript);
+
       if (finalTranscript) {
-        setTranscription(prev => prev + finalTranscript);
+        setTranscription(prev => {
+          const newTranscription = prev + finalTranscript;
+          console.log('Setting transcription to:', newTranscription);
+          return newTranscription;
+        });
       }
       
       setCurrentTranscript(interimTranscript);
