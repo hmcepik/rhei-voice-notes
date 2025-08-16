@@ -45,7 +45,15 @@ const VoiceRecorder = () => {
 
   useEffect(() => {
     // Check if speech recognition is supported
+    console.log('Speech Recognition support check:', {
+      hasSpeechRecognition: 'SpeechRecognition' in window,
+      hasWebkitSpeechRecognition: 'webkitSpeechRecognition' in window,
+      userAgent: navigator.userAgent,
+      isSecureContext: window.isSecureContext
+    });
+    
     if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+      console.error('Speech recognition not supported');
       toast.error("Speech recognition requires Chrome, Edge, or Safari. On mobile, please use Chrome or Safari browser.");
       return;
     }
