@@ -212,6 +212,10 @@ const VoiceRecorder = () => {
     
     // Save to localStorage
     localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
+    console.log('Saved note to localStorage:', note); // Debug log
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
 
     // Reset state
     setTranscription('');

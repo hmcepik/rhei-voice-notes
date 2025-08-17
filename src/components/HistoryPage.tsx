@@ -20,17 +20,44 @@ const HistoryPage = () => {
 
   useEffect(() => {
     loadNotes();
+    
+    // Add event listener for when localStorage changes (notes are added)
+    const handleStorageChange = () => {
+      loadNotes();
+    };
+    
+    // Listen for custom events when notes are saved
+    window.addEventListener('rhei-note-saved', handleStorageChange);
+    
+    // Also listen for focus events to refresh when user comes back to this tab
+    window.addEventListener('focus', loadNotes);
+    
+    return () => {
+      window.removeEventListener('rhei-note-saved', handleStorageChange);
+      window.removeEventListener('focus', loadNotes);
+    };
   }, []);
 
   const loadNotes = () => {
     const savedNotes = localStorage.getItem('rhei-voice-notes');
+    console.log('Loading notes from localStorage:', savedNotes); // Debug log
+    
     if (savedNotes) {
-      const parsedNotes = JSON.parse(savedNotes).map((note: any) => ({
-        ...note,
-        title: note.title || `Note - ${new Date(note.timestamp).toLocaleString()}`, // Provide default title for old notes
-        timestamp: new Date(note.timestamp)
-      }));
-      setNotes(parsedNotes);
+      try {
+        const parsedNotes = JSON.parse(savedNotes).map((note: any) => ({
+          ...note,
+          title: note.title || `Note - ${new Date(note.timestamp).toLocaleString()}`, // Provide default title for old notes
+          timestamp: new Date(note.timestamp)
+        }));
+        console.log('Parsed notes:', parsedNotes); // Debug log
+        setNotes(parsedNotes);
+      } catch (error) {
+        console.error('Error parsing notes from localStorage:', error);
+        setNotes([]);
+      }
+    } else {
+      console.log('No notes found in localStorage'); // Debug log
+      setNotes([]);
     }
   };
 
