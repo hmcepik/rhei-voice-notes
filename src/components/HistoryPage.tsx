@@ -172,22 +172,22 @@ ${note.summary}
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-center">
-            <div className="bg-card p-3 rounded-lg border">
+          <div className="grid grid-cols-3 gap-2 lg:gap-4 text-center">
+            <div className="bg-card p-2 lg:p-3 rounded-lg border">
               <div className="flex items-center justify-center space-x-1 text-rhei-primary">
                 <FileText className="w-4 h-4" />
                 <span className="font-semibold">{stats.total}</span>
               </div>
               <p className="text-xs text-muted-foreground">Total Notes</p>
             </div>
-            <div className="bg-card p-3 rounded-lg border">
+            <div className="bg-card p-2 lg:p-3 rounded-lg border">
               <div className="flex items-center justify-center space-x-1 text-rhei-primary">
                 <Search className="w-4 h-4" />
                 <span className="font-semibold">{stats.filtered}</span>
               </div>
               <p className="text-xs text-muted-foreground">Showing</p>
             </div>
-            <div className="bg-card p-3 rounded-lg border">
+            <div className="bg-card p-2 lg:p-3 rounded-lg border">
               <div className="flex items-center justify-center space-x-1 text-rhei-primary">
                 <Calendar className="w-4 h-4" />
                 <span className="font-semibold">{stats.withSummary}</span>
