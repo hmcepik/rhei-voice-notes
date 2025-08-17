@@ -146,7 +146,7 @@ ${note.summary}
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="space-y-6">
-        {/* Header & Stats */}
+        {/* Debug Info & Header & Stats */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
           <div>
             <h2 className="text-2xl font-bold">Voice Notes History</h2>
@@ -154,6 +154,19 @@ ${note.summary}
               {stats.filtered} of {stats.total} notes 
               {searchTerm && ` matching "${searchTerm}"`}
             </p>
+            {/* Debug info */}
+            <div className="mt-2 p-2 bg-muted rounded text-xs">
+              <p>Debug: localStorage key exists: {localStorage.getItem('rhei-voice-notes') ? 'YES' : 'NO'}</p>
+              <p>Debug: localStorage content length: {localStorage.getItem('rhei-voice-notes')?.length || 0}</p>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={loadNotes}
+                className="mt-1"
+              >
+                Refresh Notes
+              </Button>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-center">
