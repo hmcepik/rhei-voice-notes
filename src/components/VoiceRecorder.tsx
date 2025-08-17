@@ -141,7 +141,14 @@ const VoiceRecorder = () => {
       setProcessingStage("Converting audio...");
       const arrayBuffer = await audioBlob.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
-      const base64Audio = btoa(String.fromCharCode(...uint8Array));
+      
+      // Convert to base64 in chunks to prevent call stack overflow
+      let base64Audio = '';
+      const chunkSize = 32768; // 32KB chunks
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.slice(i, i + chunkSize);
+        base64Audio += btoa(String.fromCharCode(...chunk));
+      }
       
       setProcessingStage("Transcribing with AI...");
       const transcribeResponse = await supabase.functions.invoke('transcribe-audio', {
