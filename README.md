@@ -2,7 +2,7 @@
 
 > Transform speech into actionable notes at the speed of thought
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Available-brightgreen)](https://rhei-thought-to-scribe.lovable.app/)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Available-brightgreen)]([https://rhei-thought-to-scribe.lovable.app/](https://rhei-voice-notes.lovable.app/))
 [![GitHub](https://img.shields.io/badge/📂_Source_Code-GitHub-blue)](https://github.com/hmcepik/rhei-thought-scribe/tree/main)
 
 ## 🎯 Project Overview
@@ -47,7 +47,7 @@ npm run dev
 Open [http://localhost:5173](http://localhost:5173) and grant microphone permissions when prompted.
 
 ### One-Click Demo
-🔗 **Live Demo:** [https://rhei-thought-to-scribe.lovable.app/](https://rhei-thought-to-scribe.lovable.app/)
+🔗 **Live Demo:** [https://rhei-voice-notes.lovable.app/]((https://rhei-voice-notes.lovable.app/))
 
 ## 🛠 Tech Stack
 
