@@ -308,6 +308,17 @@ const VoiceRecorder = () => {
                   : "Click the microphone to start recording your voice note"
               }
             </p>
+
+            {/* Primary Save CTA - Show when transcription is ready */}
+            {transcription && !isProcessing && (
+              <Button 
+                onClick={saveNote}
+                size="lg"
+                className="w-full max-w-md"
+              >
+                Save Voice Note
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -352,6 +363,20 @@ const VoiceRecorder = () => {
                 className="min-h-[200px] resize-none"
                 disabled={isProcessing}
               />
+
+              {/* Save Edits CTA under transcript */}
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-sm text-muted-foreground">
+                  Edit the transcription above if needed
+                </span>
+                <Button 
+                  onClick={saveNote}
+                  variant="outline"
+                  disabled={isProcessing}
+                >
+                  Save Edits
+                </Button>
+              </div>
 
               {enhancement && (
                 <div className="space-y-4">
@@ -412,13 +437,6 @@ const VoiceRecorder = () => {
                 </div>
               )}
 
-              <Button 
-                onClick={saveNote}
-                className="w-full"
-                disabled={isProcessing}
-              >
-                Save Note
-              </Button>
             </div>
           </CardContent>
         </Card>
