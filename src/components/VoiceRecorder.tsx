@@ -20,6 +20,7 @@ const VoiceRecorder = () => {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [autoSavedNoteId, setAutoSavedNoteId] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -103,6 +104,7 @@ const VoiceRecorder = () => {
       // Clear previous results
       setTranscription('');
       setEnhancement(null);
+      setAutoSavedNoteId(null);
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
         setAudioUrl(null);
@@ -194,8 +196,9 @@ const VoiceRecorder = () => {
   };
 
   const autoSaveNote = async (transcriptionText: string, enhancementData: any) => {
+    const noteId = crypto.randomUUID();
     const note: VoiceNote = {
-      id: crypto.randomUUID(),
+      id: noteId,
       title: enhancementData?.title || `Voice Note ${new Date().toLocaleDateString()}`,
       transcription: transcriptionText.trim(),
       summary: enhancementData?.summary || '',
@@ -216,6 +219,9 @@ const VoiceRecorder = () => {
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
 
+    // Store the auto-saved note ID for future edits
+    setAutoSavedNoteId(noteId);
+
     // DON'T reset state - keep transcript visible for editing
     // setTranscription('');
     // setEnhancement(null);
@@ -233,39 +239,59 @@ const VoiceRecorder = () => {
       return;
     }
 
-    const note: VoiceNote = {
-      id: crypto.randomUUID(),
-      title: enhancement?.title || `Voice Note ${new Date().toLocaleDateString()}`,
-      transcription: transcription.trim(),
-      summary: enhancement?.summary || '',
-      tags: enhancement?.keyTopics || [],
-      timestamp: new Date(),
-      enhancement: enhancement,
-    };
-
     // Get existing notes from localStorage
     const existingNotes = JSON.parse(localStorage.getItem('rhei-voice-notes') || '[]');
     
-    // Add new note
-    const updatedNotes = [note, ...existingNotes];
-    
-    // Save to localStorage
-    localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
+    if (autoSavedNoteId) {
+      // Update the existing auto-saved note
+      const updatedNotes = existingNotes.map((note: VoiceNote) => 
+        note.id === autoSavedNoteId 
+          ? { 
+              ...note, 
+              transcription: transcription.trim(),
+              title: enhancement?.title || note.title
+            }
+          : note
+      );
+      
+      localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
+      
+      // Dispatch custom event to notify other components
+      const updatedNote = updatedNotes.find((note: VoiceNote) => note.id === autoSavedNoteId);
+      window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: updatedNote }));
+      
+      toast.success("Note updated successfully!");
+    } else {
+      // Create a new note if no auto-saved note exists
+      const note: VoiceNote = {
+        id: crypto.randomUUID(),
+        title: enhancement?.title || `Voice Note ${new Date().toLocaleDateString()}`,
+        transcription: transcription.trim(),
+        summary: enhancement?.summary || '',
+        tags: enhancement?.keyTopics || [],
+        timestamp: new Date(),
+        enhancement: enhancement,
+      };
 
-    // Reset state
+      const updatedNotes = [note, ...existingNotes];
+      localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
+      
+      toast.success("Voice note saved successfully!");
+    }
+
+    // Reset state after saving edits
     setTranscription('');
     setEnhancement(null);
     setAudioBlob(null);
     setRecordingDuration(0);
+    setAutoSavedNoteId(null);
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
     }
-
-    toast.success("Voice note saved successfully!");
   };
 
   const togglePlayback = () => {
