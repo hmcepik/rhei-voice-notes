@@ -180,6 +180,7 @@ const VoiceRecorder = () => {
       }
 
       setEnhancement(enhanceResponse.data);
+      console.log('✅ Enhancement data received:', JSON.stringify(enhanceResponse.data, null, 2));
       console.log('✅ Processing complete - transcription:', transcriptionText, 'enhancement:', enhanceResponse.data);
       
       // Auto-save the note
