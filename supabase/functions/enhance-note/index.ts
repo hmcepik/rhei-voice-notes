@@ -19,6 +19,11 @@ serve(async (req) => {
     }
 
     console.log('Processing note enhancement request');
+    
+    const openAIKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIKey) {
+      throw new Error('OPENAI_API_KEY not found in environment variables');
+    }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -77,7 +82,7 @@ Keep everything concise and practical for quick reference.`
     
     try {
       const enhancement = JSON.parse(content);
-      console.log('Enhancement successful');
+      console.log('Enhancement successful:', enhancement);
       
       return new Response(
         JSON.stringify(enhancement),
