@@ -10,6 +10,13 @@ export interface VoiceNote {
     comment?: string;
     transcriptionAccuracy?: number; // 1-5 stars
   };
+  enhancement?: {
+    title?: string;
+    summary?: string;
+    actionItems?: string[];
+    keyTopics?: string[];
+    sentiment?: string;
+  };
 }
 
 // Web Speech Recognition API TypeScript definitions

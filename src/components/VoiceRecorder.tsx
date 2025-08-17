@@ -201,6 +201,7 @@ const VoiceRecorder = () => {
       summary: enhancementData?.summary || '',
       tags: enhancementData?.keyTopics || [],
       timestamp: new Date(),
+      enhancement: enhancementData,
     };
 
     // Get existing notes from localStorage
@@ -239,6 +240,7 @@ const VoiceRecorder = () => {
       summary: enhancement?.summary || '',
       tags: enhancement?.keyTopics || [],
       timestamp: new Date(),
+      enhancement: enhancement,
     };
 
     // Get existing notes from localStorage

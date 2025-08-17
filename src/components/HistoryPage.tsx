@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Copy, Trash2, Edit3, Save, X, Calendar, FileText, ThumbsUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { VoiceNote } from "@/types/VoiceNote";
 import FeedbackModal from "@/components/FeedbackModal";
@@ -316,7 +317,64 @@ ${note.summary}
                     )}
                   </div>
 
-                  {note.summary && (
+                  
+                  {/* AI Enhancement Section */}
+                  {note.enhancement && (
+                    <div>
+                      <h4 className="font-medium mb-2">AI Analysis</h4>
+                      <div className="bg-rhei-primary/5 p-3 rounded-md space-y-3">
+                        {note.enhancement.summary && (
+                          <div>
+                            <span className="text-sm font-medium">Summary:</span>
+                            <p className="text-sm mt-1">{note.enhancement.summary}</p>
+                          </div>
+                        )}
+                        
+                        {note.enhancement.actionItems && note.enhancement.actionItems.length > 0 && (
+                          <div>
+                            <span className="text-sm font-medium">Action Items:</span>
+                            <ul className="list-disc list-inside text-sm mt-1 space-y-1">
+                              {note.enhancement.actionItems.map((item: string, index: number) => (
+                                <li key={index}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {note.enhancement.keyTopics && note.enhancement.keyTopics.length > 0 && (
+                          <div>
+                            <span className="text-sm font-medium">Key Topics:</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {note.enhancement.keyTopics.map((topic: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {topic}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {note.enhancement.sentiment && (
+                          <div>
+                            <span className="text-sm font-medium">Sentiment:</span>
+                            <Badge 
+                              variant="outline" 
+                              className={`ml-2 text-xs ${
+                                note.enhancement.sentiment === 'positive' ? 'border-green-500 text-green-700' :
+                                note.enhancement.sentiment === 'negative' ? 'border-red-500 text-red-700' :
+                                'border-gray-500 text-gray-700'
+                              }`}
+                            >
+                              {note.enhancement.sentiment}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Legacy summary for backward compatibility */}
+                  {note.summary && !note.enhancement && (
                     <div>
                       <h4 className="font-medium mb-2">Summary</h4>
                       <div className="bg-rhei-primary/5 p-3 rounded-md">
