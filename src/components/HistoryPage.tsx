@@ -158,6 +158,9 @@ ${note.summary}
             <div className="mt-2 p-2 bg-muted rounded text-xs">
               <p>Debug: localStorage key exists: {localStorage.getItem('rhei-voice-notes') ? 'YES' : 'NO'}</p>
               <p>Debug: localStorage content length: {localStorage.getItem('rhei-voice-notes')?.length || 0}</p>
+              <p>Debug: notes array length: {notes.length}</p>
+              <p>Debug: filtered notes length: {filteredNotes.length}</p>
+              <p>Debug: first note: {notes.length > 0 ? JSON.stringify(notes[0]).substring(0, 100) + '...' : 'none'}</p>
               <Button 
                 size="sm" 
                 variant="outline" 
