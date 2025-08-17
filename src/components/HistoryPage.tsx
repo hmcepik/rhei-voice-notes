@@ -161,6 +161,7 @@ ${note.summary}
               <p>Debug: notes array length: {notes.length}</p>
               <p>Debug: filtered notes length: {filteredNotes.length}</p>
               <p>Debug: first note: {notes.length > 0 ? JSON.stringify(notes[0]).substring(0, 100) + '...' : 'none'}</p>
+              <p>Debug: Raw localStorage: {localStorage.getItem('rhei-voice-notes')?.substring(0, 200) + '...' || 'empty'}</p>
               <Button 
                 size="sm" 
                 variant="outline" 
