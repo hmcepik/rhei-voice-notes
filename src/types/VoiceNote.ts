@@ -5,6 +5,11 @@ export interface VoiceNote {
   summary?: string;
   tags: string[];
   timestamp: Date;
+  feedback?: {
+    rating: number; // 1-5 stars
+    comment?: string;
+    transcriptionAccuracy?: number; // 1-5 stars
+  };
 }
 
 // Web Speech Recognition API TypeScript definitions

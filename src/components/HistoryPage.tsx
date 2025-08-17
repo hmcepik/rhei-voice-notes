@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Copy, Trash2, Edit3, Save, X, Calendar, FileText } from "lucide-react";
+import { Search, Copy, Trash2, Edit3, Save, X, Calendar, FileText, Star } from "lucide-react";
 import { toast } from "sonner";
 import { VoiceNote } from "@/types/VoiceNote";
+import FeedbackModal from "@/components/FeedbackModal";
+import FeedbackDisplay from "@/components/FeedbackDisplay";
 
 const HistoryPage = () => {
   const [notes, setNotes] = useState<VoiceNote[]>([]);
@@ -13,6 +15,8 @@ const HistoryPage = () => {
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editTitle, setEditTitle] = useState("");
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [selectedNoteForFeedback, setSelectedNoteForFeedback] = useState<VoiceNote | null>(null);
 
   useEffect(() => {
     loadNotes();
@@ -87,6 +91,23 @@ ${note.summary}
     } catch (error) {
       toast.error("Failed to copy to clipboard");
     }
+  };
+
+  const openFeedbackModal = (note: VoiceNote) => {
+    setSelectedNoteForFeedback(note);
+    setFeedbackModalOpen(true);
+  };
+
+  const saveFeedback = (feedback: { rating: number; comment?: string; transcriptionAccuracy?: number }) => {
+    if (!selectedNoteForFeedback) return;
+    
+    const updatedNotes = notes.map(note => 
+      note.id === selectedNoteForFeedback.id ? { ...note, feedback } : note
+    );
+    setNotes(updatedNotes);
+    localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
+    toast.success("Feedback saved successfully");
+    setSelectedNoteForFeedback(null);
   };
 
   const stats = {
@@ -200,6 +221,15 @@ ${note.summary}
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => openFeedbackModal(note)}
+                        className={note.feedback ? "text-rhei-primary" : ""}
+                        title={note.feedback ? "Edit feedback" : "Add feedback"}
+                      >
+                        <Star className={`w-4 h-4 ${note.feedback ? "fill-current" : ""}`} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => startEditing(note)}
                         disabled={editingNote === note.id}
                       >
@@ -264,12 +294,23 @@ ${note.summary}
                       </div>
                     </div>
                   )}
+
+                  {note.feedback && (
+                    <FeedbackDisplay feedback={note.feedback} />
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      <FeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+        onSubmit={saveFeedback}
+        initialFeedback={selectedNoteForFeedback?.feedback}
+      />
     </div>
   );
 };
