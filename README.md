@@ -15,8 +15,8 @@ RHEI Voice Notes is an AI-powered productivity tool that eliminates transcriptio
 
 ## ✨ Key Features
 
-- 🎙️ **Real-time Speech Transcription** - Browser-native voice recognition with instant feedback
-- 🤖 **AI-Powered Summaries** - Automatic bullet-point summaries for longer recordings
+- 🎙️ **Professional AI Transcription** - OpenAI Whisper API for high-accuracy speech-to-text
+- 🤖 **AI-Powered Enhancement** - GPT-4 generates titles, summaries, and action items automatically
 - 🔍 **Full-Text Search** - Search across all notes, titles, and summaries
 - ✏️ **Editable Content** - Edit transcriptions and titles inline
 - 📱 **Mobile-First Design** - Responsive interface for capturing ideas anywhere
@@ -28,7 +28,8 @@ RHEI Voice Notes is an AI-powered productivity tool that eliminates transcriptio
 
 ### Prerequisites
 - Node.js 16+ 
-- Modern browser with Web Speech API support (Chrome, Edge, Safari)
+- Modern browser with MediaRecorder API support (Chrome, Edge, Safari, Firefox)
+- OpenAI API key (for transcription and AI enhancement)
 
 ### Installation
 ```bash
@@ -43,7 +44,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:8080](http://localhost:8080) and grant microphone permissions when prompted.
+Open [http://localhost:5173](http://localhost:5173) and grant microphone permissions when prompted.
 
 ### One-Click Demo
 🔗 **Live Demo:** [https://rhei-thought-to-scribe.lovable.app/](https://rhei-thought-to-scribe.lovable.app/)
@@ -52,24 +53,27 @@ Open [http://localhost:8080](http://localhost:8080) and grant microphone permiss
 
 - **Frontend:** React 18.3.1 + TypeScript + TailwindCSS
 - **Build Tool:** Vite for lightning-fast development
-- **Speech Recognition:** Web Speech Recognition API (browser-native)
+- **AI Services:** OpenAI Whisper API (transcription) + GPT-4 (enhancement)
+- **Backend:** Supabase Edge Functions for AI processing
+- **Audio:** MediaRecorder API for high-quality audio capture
 - **Storage:** localStorage (privacy-first approach)
-- **Deployment:** Lovable + Supabase platform
+- **Deployment:** Lovable Platform with Supabase integration
 - **UI Components:** shadcn/ui for consistent design
 
-**Stack Rationale:** This combination provides optimal balance of development speed, runtime reliability, and future scalability while eliminating procurement friction for immediate validation.
+**Stack Rationale:** OpenAI provides enterprise-grade transcription accuracy while Supabase Edge Functions ensure scalable AI processing. This combination delivers immediate professional results while maintaining cost-effective validation.
 
 ## 🏗 Architecture Decisions
 
-### MVP Strategy: Browser-Native First
-- **Web Speech Recognition API** for zero-latency, cost-free transcription
-- **Immediate user feedback** essential for adoption
-- **Zero procurement friction** enables instant testing
+### MVP Strategy: AI-First Approach
+- **OpenAI Whisper API** for enterprise-grade transcription accuracy
+- **GPT-4 enhancement** provides intelligent summarization and action items
+- **Supabase Edge Functions** enable scalable AI processing
+- **Professional quality** from day one builds user confidence
 
-### V2 Migration Path
-- **Google Cloud Speech-to-Text:** Enterprise reliability, real-time streaming
-- **OpenAI Whisper:** 4x cost reduction, superior accuracy
-- **Strategic validation:** Test user needs first, optimize economics second
+### Future Optimization Path
+- **Google Cloud Speech-to-Text:** Real-time streaming for live meetings
+- **Custom model fine-tuning:** Domain-specific terminology optimization
+- **Multi-modal AI:** Document and image integration with voice notes
 
 ### Data Architecture
 - **Privacy-first localStorage** eliminates breach risks
@@ -80,15 +84,16 @@ Open [http://localhost:8080](http://localhost:8080) and grant microphone permiss
 
 ### Core Workflow
 1. **Record** → Click large circular button, speak naturally
-2. **Transcribe** → Real-time text appears as you speak
-3. **Edit** → Refine transcription and add context
-4. **Save** → Auto-generated title with timestamp
-5. **Organize** → Search, filter, and manage note history
+2. **AI Transcribe** → OpenAI Whisper converts speech to text with high accuracy
+3. **AI Enhance** → GPT-4 generates title, summary, and action items automatically
+4. **Edit** → Refine transcription and add context as needed
+5. **Save** → Store with intelligent auto-generated metadata
+6. **Organize** → Search, filter, and manage note history
 
 ### Mobile-Optimized
 - Touch-friendly interface for meeting contexts
-- Offline capability for unreliable WiFi
-- Background recording while switching apps
+- High-quality audio capture across devices
+- Responsive design adapts to any screen size
 
 ## 📊 Success Metrics
 
@@ -101,33 +106,34 @@ Open [http://localhost:8080](http://localhost:8080) and grant microphone permiss
 
 | Browser | Support Level | Notes |
 |---------|---------------|-------|
-| Chrome | ✅ Full | Recommended for best experience |
-| Edge | ✅ Full | Complete Web Speech API support |
+| Chrome | ✅ Full | Recommended for best MediaRecorder support |
+| Edge | ✅ Full | Complete MediaRecorder API support |
 | Safari | ✅ Full | iOS and macOS compatible |
-| Firefox | ❌ Limited | Web Speech API constraints |
+| Firefox | ✅ Full | Full MediaRecorder API support |
 
 ## 🚧 Known Limitations & Roadmap
 
 ### Current Constraints
-- Browser dependency for Web Speech API
-- Performance varies with microphone quality
-- localStorage limit (~5-10MB)
+- OpenAI API dependency for transcription processing
+- Network connectivity required for AI features
+- localStorage limit (~5-10MB) for note storage
 - Single-user focus (no team collaboration)
 
 ### V2 Roadmap for Made for Teams
-- **Enhanced AI:** Google Cloud Speech-to-Text + OpenAI Whisper migration
+- **Real-time Features:** Live meeting transcription with speaker identification
 - **Team Features:** Shared note libraries, collaborative editing
 - **Integrations:** Direct Slack posting, email sharing, calendar integration
-- **Advanced Capabilities:** Multi-speaker identification, meeting transcription
+- **Advanced AI:** Custom model fine-tuning, domain-specific optimization
 - **Mobile:** PWA installation, offline sync, push notifications
 - **Templates:** Meeting notes, voice memos, project updates
 
 ## 🔐 Privacy & Security
 
-- **Fully client-side operation** - no server-side data storage
+- **Privacy-first storage** - notes stored locally, users control their data
+- **Secure AI processing** - audio processed via encrypted Supabase Edge Functions
 - **Permission-based access** - explicit microphone permission required
-- **Local data control** - users own their transcription history
 - **No tracking** - zero analytics or external scripts
+- **Temporary audio** - recordings deleted after transcription processing
 
 ## 🎯 Product Strategy for RHEI Integration
 
