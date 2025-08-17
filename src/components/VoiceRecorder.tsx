@@ -216,15 +216,15 @@ const VoiceRecorder = () => {
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
 
-    // Reset state
-    setTranscription('');
-    setEnhancement(null);
-    setAudioBlob(null);
-    setRecordingDuration(0);
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
-    }
+    // DON'T reset state - keep transcript visible for editing
+    // setTranscription('');
+    // setEnhancement(null);
+    // setAudioBlob(null);
+    // setRecordingDuration(0);
+    // if (audioUrl) {
+    //   URL.revokeObjectURL(audioUrl);
+    //   setAudioUrl(null);
+    // }
   };
 
   const saveEdits = () => {
