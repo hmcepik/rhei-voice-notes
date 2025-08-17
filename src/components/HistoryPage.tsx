@@ -354,19 +354,27 @@ ${note.summary}
                           </div>
                         )}
 
-                        {note.enhancement.sentiment && (
+                        {note.enhancement.smartTags && note.enhancement.smartTags.length > 0 && (
                           <div>
-                            <span className="text-sm font-medium">Sentiment:</span>
-                            <Badge 
-                              variant="outline" 
-                              className={`ml-2 text-xs ${
-                                note.enhancement.sentiment === 'positive' ? 'border-green-500 text-green-700' :
-                                note.enhancement.sentiment === 'negative' ? 'border-red-500 text-red-700' :
-                                'border-gray-500 text-gray-700'
-                              }`}
-                            >
-                              {note.enhancement.sentiment}
-                            </Badge>
+                            <span className="text-sm font-medium">Smart Tags:</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {note.enhancement.smartTags.map((tag: string, index: number) => (
+                                <Badge 
+                                  key={index} 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    ['engineering', 'product', 'design'].includes(tag.toLowerCase()) ? 'border-blue-500 text-blue-700' :
+                                    ['marketing', 'sales'].includes(tag.toLowerCase()) ? 'border-green-500 text-green-700' :
+                                    ['finance', 'operations'].includes(tag.toLowerCase()) ? 'border-purple-500 text-purple-700' :
+                                    ['personal', 'idea'].includes(tag.toLowerCase()) ? 'border-orange-500 text-orange-700' :
+                                    ['task', 'reminder'].includes(tag.toLowerCase()) ? 'border-red-500 text-red-700' :
+                                    'border-gray-500 text-gray-700'
+                                  }`}
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

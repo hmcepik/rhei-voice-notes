@@ -15,7 +15,7 @@ export interface VoiceNote {
     summary?: string;
     actionItems?: string[];
     keyTopics?: string[];
-    sentiment?: string;
+    smartTags?: string[];
   };
 }
 

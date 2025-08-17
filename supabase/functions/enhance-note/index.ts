@@ -39,15 +39,20 @@ Analyze the provided transcription and return a JSON response with the following
   "summary": "A clear, well-structured summary highlighting key points (2-4 sentences)",
   "actionItems": ["action item 1", "action item 2"],
   "keyTopics": ["topic1", "topic2", "topic3"],
-  "sentiment": "positive|neutral|negative"
+  "smartTags": ["tag1", "tag2"]
 }
+
+Smart tags should categorize the content using these options:
+- Team: engineering, product, marketing, finance, sales, hr, design, operations
+- Type: personal, meeting, task, idea, reminder, feedback, decision, planning, research
+- Other: other
 
 Focus on:
 - Creating meaningful titles that capture the essence of the content
 - Writing summaries that highlight the most important information
 - Extracting actionable items mentioned in the transcription
 - Identifying key topics or themes
-- Determining overall sentiment
+- Assigning relevant smart tags for categorization
 
 Keep everything concise and practical for quick reference.`
           },
@@ -87,7 +92,7 @@ Keep everything concise and practical for quick reference.`
           summary: content,
           actionItems: [],
           keyTopics: [],
-          sentiment: "neutral"
+          smartTags: []
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
