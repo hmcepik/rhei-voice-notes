@@ -158,4 +158,4 @@ Open [http://localhost:5173](http://localhost:5173) and grant microphone permiss
 
 **Built by:** Hannah Cepik | AI Product Builder Assessment  
 **For:** RHEI Made for Teams Initiative  
-**Demo:** [rhei-thought-to-scribe.lovable.app](https://rhei-thought-to-scribe.lovable.app/)
+**Demo:** [https://rhei-voice-notes.lovable.app/](https://rhei-voice-notes.lovable.app/)
