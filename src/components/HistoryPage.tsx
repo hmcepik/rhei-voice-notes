@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Copy, Trash2, Edit3, Save, X, Calendar, FileText, Star } from "lucide-react";
+import { Search, Copy, Trash2, Edit3, Save, X, Calendar, FileText, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { VoiceNote } from "@/types/VoiceNote";
 import FeedbackModal from "@/components/FeedbackModal";
@@ -225,7 +225,7 @@ ${note.summary}
                         className={note.feedback ? "text-rhei-primary" : ""}
                         title={note.feedback ? "Edit feedback" : "Add feedback"}
                       >
-                        <Star className={`w-4 h-4 ${note.feedback ? "fill-current" : ""}`} />
+                        <ThumbsUp className={`w-4 h-4 ${note.feedback ? "fill-current" : ""}`} />
                       </Button>
                       <Button
                         variant="ghost"
