@@ -6,34 +6,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Process base64 in chunks to prevent memory issues
-function processBase64Chunks(base64String: string, chunkSize = 32768) {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
+// Process base64 data safely without call stack issues
+function base64ToUint8Array(base64: string): Uint8Array {
+  // Remove any whitespace and data URL prefix if present
+  const cleanBase64 = base64.replace(/\s/g, '').split(',').pop() || base64;
   
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
+  try {
+    const binaryString = atob(cleanBase64);
+    const bytes = new Uint8Array(binaryString.length);
     
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
     
-    chunks.push(bytes);
-    position += chunkSize;
+    return bytes;
+  } catch (error) {
+    console.error('Base64 decoding error:', error);
+    throw new Error('Invalid base64 audio data');
   }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
 }
 
 serve(async (req) => {
@@ -50,8 +40,8 @@ serve(async (req) => {
 
     console.log('Processing audio transcription request');
 
-    // Process audio in chunks
-    const binaryAudio = processBase64Chunks(audio);
+    // Process audio data safely
+    const binaryAudio = base64ToUint8Array(audio);
     
     // Prepare form data
     const formData = new FormData();
