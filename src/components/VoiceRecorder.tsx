@@ -59,6 +59,17 @@ const VoiceRecorder = () => {
 
   const startRecording = async () => {
     try {
+      // Clear previous results first to start fresh
+      setTranscription('');
+      setEnhancement(null);
+      setAutoSavedNoteId(null);
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+      }
+      setAudioBlob(null);
+      setRecordingDuration(0);
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       
@@ -100,15 +111,6 @@ const VoiceRecorder = () => {
       setIsRecording(true);
       recordingStartTimeRef.current = Date.now();
       setRecordingDuration(0);
-      
-      // Clear previous results
-      setTranscription('');
-      setEnhancement(null);
-      setAutoSavedNoteId(null);
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-        setAudioUrl(null);
-      }
       
       // Start duration timer
       durationIntervalRef.current = setInterval(() => {
