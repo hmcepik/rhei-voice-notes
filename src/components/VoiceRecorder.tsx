@@ -179,7 +179,10 @@ const VoiceRecorder = () => {
 
       setEnhancement(enhanceResponse.data);
       console.log('✅ Processing complete - transcription:', transcriptionText, 'enhancement:', enhanceResponse.data);
-      toast.success("Voice note processed successfully!");
+      
+      // Auto-save the note
+      await autoSaveNote(transcriptionText, enhanceResponse.data);
+      toast.success("Voice note saved successfully!");
       
     } catch (error) {
       console.error('Audio processing error:', error);
@@ -190,7 +193,40 @@ const VoiceRecorder = () => {
     }
   };
 
-  const saveNote = () => {
+  const autoSaveNote = async (transcriptionText: string, enhancementData: any) => {
+    const note: VoiceNote = {
+      id: crypto.randomUUID(),
+      title: enhancementData?.title || `Voice Note ${new Date().toLocaleDateString()}`,
+      transcription: transcriptionText.trim(),
+      summary: enhancementData?.summary || '',
+      tags: enhancementData?.keyTopics || [],
+      timestamp: new Date(),
+    };
+
+    // Get existing notes from localStorage
+    const existingNotes = JSON.parse(localStorage.getItem('rhei-voice-notes') || '[]');
+    
+    // Add new note
+    const updatedNotes = [note, ...existingNotes];
+    
+    // Save to localStorage
+    localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
+
+    // Reset state
+    setTranscription('');
+    setEnhancement(null);
+    setAudioBlob(null);
+    setRecordingDuration(0);
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+  };
+
+  const saveEdits = () => {
     if (!transcription.trim()) {
       toast.error("No transcription to save");
       return;
@@ -213,7 +249,6 @@ const VoiceRecorder = () => {
     
     // Save to localStorage
     localStorage.setItem('rhei-voice-notes', JSON.stringify(updatedNotes));
-    console.log('Saved note to localStorage:', note); // Debug log
     
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('rhei-note-saved', { detail: note }));
@@ -305,20 +340,11 @@ const VoiceRecorder = () => {
                 ? processingStage || "Processing..." 
                 : isRecording 
                   ? "Recording... Click to stop and process with AI" 
-                  : "Click the microphone to start recording your voice note"
+                  : transcription 
+                    ? "Transcription below"
+                    : "Click the microphone to start recording your voice note"
               }
             </p>
-
-            {/* Primary Save CTA - Show when transcription is ready */}
-            {transcription && !isProcessing && (
-              <Button 
-                onClick={saveNote}
-                size="lg"
-                className="w-full max-w-md"
-              >
-                Save Voice Note
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -361,16 +387,14 @@ const VoiceRecorder = () => {
               />
 
               {/* Save Edits CTA under transcript */}
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-sm text-muted-foreground">
-                  Edit the transcription above if needed
-                </span>
+              <div className="flex justify-center pt-4">
                 <Button 
-                  onClick={saveNote}
-                  variant="outline"
+                  onClick={saveEdits}
+                  size="lg"
+                  className="w-full max-w-md"
                   disabled={isProcessing}
                 >
-                  Save Edits
+                  Save Note
                 </Button>
               </div>
 
@@ -438,21 +462,6 @@ const VoiceRecorder = () => {
         </Card>
       )}
 
-      <Card className="bg-muted/50">
-        <CardContent className="p-4">
-          <h4 className="font-medium mb-2">How to use:</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Click the microphone to start recording</li>
-            <li>• Allow microphone access when prompted</li>
-            <li>• Speak clearly into your device's microphone</li>
-            <li>• Click stop when finished - AI will process your audio</li>
-            <li>• Review and edit the transcription if needed</li>
-            <li>• Get AI-powered summaries, action items, and insights</li>
-            <li>• Save your enhanced voice note</li>
-            <li>• Works on all modern browsers and devices</li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 };

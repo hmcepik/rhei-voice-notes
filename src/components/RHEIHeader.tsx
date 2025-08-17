@@ -24,10 +24,10 @@ const RHEIHeader = () => {
           
           <div className="flex items-center space-x-2">
             <Button
-              variant={isHistoryPage ? "default" : "outline"}
+              variant={isHistoryPage ? "default" : "default"}
               size="sm"
               onClick={() => navigate(isHistoryPage ? "/" : "/history")}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               {isHistoryPage ? <Mic className="w-4 h-4" /> : <History className="w-4 h-4" />}
               <span>{isHistoryPage ? "Record" : "History"}</span>
