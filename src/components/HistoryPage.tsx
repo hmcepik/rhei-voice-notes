@@ -40,23 +40,25 @@ const HistoryPage = () => {
 
   const loadNotes = () => {
     const savedNotes = localStorage.getItem('rhei-voice-notes');
-    console.log('Loading notes from localStorage:', savedNotes); // Debug log
     
     if (savedNotes) {
       try {
-        const parsedNotes = JSON.parse(savedNotes).map((note: any) => ({
-          ...note,
-          title: note.title || `Note - ${new Date(note.timestamp).toLocaleString()}`, // Provide default title for old notes
-          timestamp: new Date(note.timestamp)
-        }));
-        console.log('Parsed notes:', parsedNotes); // Debug log
-        setNotes(parsedNotes);
+        const parsedNotes = JSON.parse(savedNotes);
+        if (Array.isArray(parsedNotes) && parsedNotes.length > 0) {
+          const validNotes = parsedNotes.map((note: any) => ({
+            ...note,
+            title: note.title || `Note - ${new Date(note.timestamp).toLocaleString()}`,
+            timestamp: new Date(note.timestamp)
+          }));
+          setNotes(validNotes);
+        } else {
+          setNotes([]);
+        }
       } catch (error) {
         console.error('Error parsing notes from localStorage:', error);
         setNotes([]);
       }
     } else {
-      console.log('No notes found in localStorage'); // Debug log
       setNotes([]);
     }
   };
@@ -155,22 +157,6 @@ ${note.summary}
               {searchTerm && ` matching "${searchTerm}"`}
             </p>
             {/* Debug info */}
-            <div className="mt-2 p-2 bg-muted rounded text-xs">
-              <p>Debug: localStorage key exists: {localStorage.getItem('rhei-voice-notes') ? 'YES' : 'NO'}</p>
-              <p>Debug: localStorage content length: {localStorage.getItem('rhei-voice-notes')?.length || 0}</p>
-              <p>Debug: notes array length: {notes.length}</p>
-              <p>Debug: filtered notes length: {filteredNotes.length}</p>
-              <p>Debug: first note: {notes.length > 0 ? JSON.stringify(notes[0]).substring(0, 100) + '...' : 'none'}</p>
-              <p>Debug: Raw localStorage: {localStorage.getItem('rhei-voice-notes')?.substring(0, 200) + '...' || 'empty'}</p>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={loadNotes}
-                className="mt-1"
-              >
-                Refresh Notes
-              </Button>
-            </div>
           </div>
           
           <div className="grid grid-cols-3 gap-2 lg:gap-4 text-center">

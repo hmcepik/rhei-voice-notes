@@ -349,10 +349,6 @@ const VoiceRecorder = () => {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Transcription</CardTitle>
-            {/* Debug info */}
-            <div className="text-xs text-muted-foreground">
-              Debug: transcription length = {transcription.length}, content = "{transcription.substring(0, 50)}..."
-            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
